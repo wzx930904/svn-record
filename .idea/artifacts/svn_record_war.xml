@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="svn-record:war">
+    <output-path>$PROJECT_DIR$/target</output-path>
+    <root id="archive" name="svn-record-1.0-SNAPSHOT.war">
+      <element id="artifact" artifact-name="svn-record:war exploded" />
+    </root>
+  </artifact>
+</component>
