@@ -6,6 +6,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
+import java.sql.Date;
 
 /**
  * @Description 分支
@@ -21,24 +22,29 @@ public class Branch {
     /*主键id*/
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)//主键生成策略
-    @Column(name="id")//数据库字段名
+    @Column(name="F_ID")//数据库字段名
     private Integer id;
 
-    @Column(name= "name")
-    private String name;
-
-    /*分支创建日期*/
-    @Column(name = "create_data")
-    private String createDate;
-
-    @Column(name = "status")
-    private String status;
-
     /*平台id*/
-    @Column(name = "platform_id")
+    @Column(name = "F_PLATFORM_ID")
     private Integer platformId;
 
-    @Column(name = "description")
+    @Transient
+    private String systemName;
+
+    @Column(name= "F_BRANCH_NAME")
+    private String branchName;
+
+    /*分支创建日期*/
+    @Column(name = "F_CREATE_DATA")
+    private String createDate;
+
+    @Column(name = "F_DESCRIPTION")
     private String desc;
 
+    @Column(name = "F_CREATE_TIME")
+    private Date createTime;
+
+    @Column(name = "F_UPDATE_TIME")
+    private Date updateTime;
 }

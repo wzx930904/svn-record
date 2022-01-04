@@ -35,4 +35,12 @@ public class MergeController {
       baseResult.setSuccess(true);
       return baseResult;
     }
+
+    @DeleteMapping("/delete.htm/{id}")
+    public BaseResult<String> delete(@PathVariable("id") Integer id) {
+        BaseResult<String> result = new BaseResult<>();
+        mergeService.deleteById(id);
+        result.setSuccess(true);
+        return result;
+    }
 }

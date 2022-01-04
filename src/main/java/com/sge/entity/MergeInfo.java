@@ -26,7 +26,9 @@ public class MergeInfo {
     private Integer branchId;
     @Column(name="F_MERGE_BRANCH_ID")
     private Integer mergeBranchId;
+    @Transient
     private String branchName;
+    @Transient
     private String mergeBranchName;
     @Column(name="F_MESSAGE")
     private String message;

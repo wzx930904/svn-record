@@ -2,21 +2,19 @@ package com.sge.service;
 
 import com.sge.advice.BusinessException;
 import com.sge.entity.Branch;
-import com.sge.entity.SvnRecord;
+import com.sge.entity.Platform;
 import com.sge.repository.BranchRepository;
-import com.sge.repository.SvnRecordRepository;
+import com.sge.utils.DateFormatUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 /**
  * Created by wzx on 2021/12/7.
@@ -27,7 +25,8 @@ public class BranchService {
     @Autowired
     private BranchRepository branchRepository;
     @Autowired
-    private SvnRecordRepository svnRecordRepository;
+    PlatformService platformService;
+
 
     /**
      * 根据系统id查询分支
@@ -48,18 +47,8 @@ public class BranchService {
      */
     public void save(Branch branch) {
         vaildateParam(branch);
-        String createDate = branch.getCreateDate();
-        createDate = createDate.split(Pattern.quote("(中国标准时间)"))[0].replace("GMT+0800","GMT+08:00");
-        SimpleDateFormat sdf = new SimpleDateFormat("E MMM dd yyyy HH:mm:ss z", Locale.US);
-        String formatDate = null;
-        try {
-            Date date = sdf.parse(createDate);
-            SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd");
-            formatDate = sdf1.format(date);
-            branch.setCreateDate(formatDate);
-        } catch (ParseException e) {
-            throw new BusinessException(e.getMessage());
-        }
+        String createDate = DateFormatUtils.CNStringDateTrasfor(branch.getCreateDate());
+        branch.setCreateDate(createDate);
         branchRepository.save(branch);
     }
 
@@ -68,8 +57,8 @@ public class BranchService {
      * @param branch
      */
     private void vaildateParam(Branch branch) {
-        if (StringUtils.isBlank(branch.getName())) {
-            throw new BusinessException("请输入版本名称");
+        if (StringUtils.isBlank(branch.getBranchName())) {
+            throw new BusinessException("请输入分支名称");
         }
         if (StringUtils.isBlank(branch.getCreateDate())) {
             throw new BusinessException("请输入创建日期");
@@ -85,6 +74,15 @@ public class BranchService {
         if (!flag) {
             throw new BusinessException("该记录不存在");
         }
+        int platformId = branch.getPlatformId();
+        int id = branch.getId();
+        String name = branch.getBranchName();
+        int count = branchRepository.countByName(id,platformId,name);
+        if (count > 0) {
+            throw new BusinessException("该系统下的分支名称不能重复");
+        }
+        String createDate = DateFormatUtils.CNStringDateTrasfor(branch.getCreateDate());
+        branch.setCreateDate(createDate);
         branchRepository.save(branch);
     }
 
@@ -99,5 +97,29 @@ public class BranchService {
     public Branch getByPK(Integer id) {
         Optional<Branch> optional = branchRepository.findById(id);
         return optional.get();
+    }
+
+    /**
+     * 分页查询
+     * @param platformId
+     * @param pageNum
+     * @param pageSize
+     * @return
+     */
+    public Page<Branch> findByPage(Integer platformId, Integer pageNum, Integer pageSize) {
+        Pageable pageable = PageRequest.of(pageNum-1,pageSize);
+        Page<Branch> page = null;
+        Branch query = new Branch();
+        query.setPlatformId(platformId);
+        Example<Branch> example = Example.of(query);
+        page = branchRepository.findAll(example,pageable);
+        if (page != null) {
+            Platform platform = platformService.getById(platformId);
+            String sysName = platform.getSystemName();
+            page.getContent().forEach(branch -> {
+                branch.setSystemName(sysName);
+            });
+        }
+        return page;
     }
 }

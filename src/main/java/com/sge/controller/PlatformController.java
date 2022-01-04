@@ -1,12 +1,10 @@
 package com.sge.controller;
 
-import com.fasterxml.jackson.databind.ser.Serializers;
 import com.sge.entity.BaseResult;
-import com.sge.entity.Branch;
 import com.sge.entity.Platform;
-import com.sge.entity.SvnRecord;
 import com.sge.service.PlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,15 +21,27 @@ public class PlatformController {
     @Autowired
     private PlatformService platformService;
 
+    @GetMapping("/findall.htm")
+    @ResponseBody
+    public BaseResult<List<Platform>> findAll() {
+        List<Platform> reslut = platformService.findAll();
+        BaseResult<List<Platform>> baseResult = new BaseResult<>();
+        baseResult.setResult(reslut);
+        baseResult.setSuccess(true);
+        return baseResult;
+    }
+
     /**
-     * 查询
+     * 分页查询
      * @return
      */
-    @RequestMapping("/query.htm")
+    @GetMapping(value = {"/query.htm/{pageSize}/{pageNum}/{sysCode}",
+                 "/query.htm/{pageSize}/{pageNum}"})
     @ResponseBody
-    public BaseResult<List<Platform>> query() {
-        List<Platform> result = platformService.findAll();
-        BaseResult<List<Platform>> baseResult = new BaseResult();
+    public BaseResult<Page<Platform>> query(@PathVariable(name ="sysCode",required = false) String sysCode,
+                                            @PathVariable("pageSize") int pageSize, @PathVariable("pageNum") int pageNum) {
+        Page<Platform> result = platformService.findByPage(sysCode,pageSize,pageNum);
+        BaseResult<Page<Platform>> baseResult = new BaseResult();
         baseResult.setResult(result);
         baseResult.setSuccess(true);
         return baseResult;

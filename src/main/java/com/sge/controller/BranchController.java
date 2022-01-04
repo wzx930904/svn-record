@@ -4,6 +4,7 @@ import com.sge.entity.BaseResult;
 import com.sge.entity.Branch;
 import com.sge.service.BranchService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,11 +28,13 @@ public class BranchController {
      * @param platformId
      * @return
      */
-    @GetMapping("/querybranch.htm/{platformId}")
+    @GetMapping(value = {"/querybranch.htm/{platformId}/{pageNum}/{pageSize}",
+                          "/querybranch.htm/{pageNum}/{pageSize}"})
     @ResponseBody
-    public BaseResult<List<Branch>> queryBranch(@PathVariable("platformId") Integer platformId) {
-        List<Branch> branches = branchService.findByplatformId(platformId);
-        BaseResult<List<Branch>> baseResult = new BaseResult<>();
+    public BaseResult<Page<Branch>> queryBranch(@PathVariable(name="platformId",required = false) Integer platformId,
+                                        @PathVariable("pageNum") Integer pageNum, @PathVariable("pageSize") Integer pageSize) {
+        Page<Branch> branches = branchService.findByPage(platformId,pageNum,pageSize);
+        BaseResult<Page<Branch>> baseResult = new BaseResult<>();
         baseResult.setSuccess(true);
         baseResult.setResult(branches);
         return baseResult;
@@ -73,7 +76,7 @@ public class BranchController {
         Branch branch = branchService.getByPK(bId);
         Map<String,Object> result = new HashMap<>();
         result.put("branchs",branches);
-        result.put("name",branch.getName());
+        result.put("name",branch.getBranchName());
         baseResult.setResult(result);
         baseResult.setSuccess(true);
         return baseResult;

@@ -4,17 +4,13 @@ import com.sge.advice.BusinessException;
 import com.sge.entity.Branch;
 import com.sge.entity.MergeInfo;
 import com.sge.repository.MergeRepository;
+import com.sge.utils.DateFormatUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
-import java.util.regex.Pattern;
 
 /**
  * Created by wzx on 2021/12/10.
@@ -35,26 +31,16 @@ public class MergeService {
         mergeInfos.forEach((merge -> {
             Branch mergeBranch = branchService.getByPK(merge.getMergeBranchId());
             Branch branch = branchService.getByPK(merge.getBranchId());
-            merge.setBranchName(branch.getName());
-            merge.setMergeBranchName(mergeBranch.getName());
+            merge.setBranchName(branch.getBranchName());
+            merge.setMergeBranchName(mergeBranch.getBranchName());
         }));
         return mergeInfos;
     }
 
     public void save(MergeInfo mergeInfo) {
         validateParam(mergeInfo);
-        String mergeDate = mergeInfo.getMergeDate();
-        mergeDate = mergeDate.split(Pattern.quote("(中国标准时间)"))[0].replace("GMT+0800","GMT+08:00");
-        SimpleDateFormat sdf = new SimpleDateFormat("E MMM dd yyyy HH:mm:ss z", Locale.US);
-        String formatDate = null;
-        try {
-            Date date = sdf.parse(mergeDate);
-            SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd");
-            formatDate = sdf1.format(date);
-            mergeInfo.setMergeDate(formatDate);
-        } catch (ParseException e) {
-           throw new  BusinessException(e.getMessage());
-        }
+        String mergeDate = DateFormatUtils.CNStringDateTrasfor(mergeInfo.getMergeDate());
+        mergeInfo.setMergeDate(mergeDate);
         mergeRepository.save(mergeInfo);
     }
 
@@ -78,5 +64,21 @@ public class MergeService {
         if (StringUtils.isBlank(mergeInfo.getMergeDate())) {
             throw new BusinessException("请输入合并时间");
         }
+        MergeInfo mi = new MergeInfo();
+        mi.setBranchId(mergeInfo.getBranchId());
+        mi.setMergeBranchId(mergeInfo.getMergeBranchId());
+        Example<MergeInfo> example = Example.of(mi);
+        long count = mergeRepository.count(example);
+        if (count > 0) {
+            throw new BusinessException("已合并到该分支");
+        }
+    }
+
+    public void deleteById(Integer id) {
+        boolean flag = mergeRepository.existsById(id);
+        if (!flag) {
+            throw new BusinessException("记录不存在");
+        }
+        mergeRepository.deleteById(id);
     }
 }
